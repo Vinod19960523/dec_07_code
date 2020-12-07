@@ -1,0 +1,109 @@
+The properties are:
+VpcId: refers to the VPC that contains the subnet.
+CidrBlock: 0.0.0.0/24 (public), 0.0.1.0/24 (private).
+AvailabilityZone: gets the first AZ retrieved from the list of AZs.
+
+Public subnet 1: connected to internet via Internet Gateway.
+Private subnet 1: no internet connection.
+
+
+
+AWSTemplateFormatVersion: 2020-12-01
+Description: Deploy a VPC with public/private subnets
+
+Resources:
+  VPC:
+     Type: AWS::EC2::VPC
+     Properties:
+       CidrBlock: 10.0.0.0/16
+       EnableDnsHostnames: true
+       Tags:
+        - Key: Name
+          Value: myVPC
+
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+       Tags:
+       - Key:Name
+         Value: myVPC Internet Gateway
+
+   AttachGateway:
+     Type: AWS::EC2::VPCGatewayAttachment
+     Properties:
+       VpcID: !Ref VPC
+       InternetGatewayId: !Ref Internetgateway
+
+   PublicSubnet1:
+     Type: AWS::EC2::Subnet
+     Properties:
+        VpcID: !Reff VPC
+        CidrBlock: 10.0.0.o/24
+        AvailabiltyZone: !Select
+          - '0'
+          -  !GetAZs ''
+        Tags:
+           - Key: Name
+             Value: Public subnet 1
+   private subnet1:
+      Type: AWS::EC2::Subnet
+      Properties:
+         VpcId: !Ref VPC
+         CidrBlock: 10.0.1.0/24
+         AvailabilityZone: !Select
+           - '0'
+           - !GetAZs ''
+         Tags:
+           - Key: Name
+             Value: Private subnet1
+
+
+   PublicRouteTable:
+      Type:mAWS::EC2::RouteTable
+      properties:
+        VpcID: !Ref VPC
+        Tags:
+          - Key: Name
+            Value: Public Route Table
+
+
+   PublicRoute:
+      Type: AWS::EC2::Route
+      Properties:
+         RouteTableID: !Ref PublicRouteTable
+         DestinationCidrBlock: 0.0.0.0/0
+         GatewayId: !Ref InternetGateway
+
+   PublicSubnetRouteTableAssociation1:
+     Type: AWS::EC@::SubnetRouteTableassociation
+     Properties:
+        SubnetId: !Ref publicsubnet1
+        RouteTableId: !Ref PublicRouteTable
+
+
+   PrivateRouteTable:
+     Type: AWS::EC2::RouteTable
+     Properties:
+        VpcID: !Ref VPC
+        Tags:
+        - Key: Name
+          Value: Private Route Table
+
+    PrivateSubnetRouteTableAssociation1:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties: 
+           SubnetId: !Ref PrivateSubnet1
+           RouteTable: !Ref PrivateRouteTable
+
+
+   Outputs:
+      Vpc:
+        Descriptioon: VPC
+        Value: !Ref VPC
+      AZ1:
+        Description: Availability Zone 1
+        Value: !GetAtt
+          - PublicSubnet1
+          - AvailabilityZone
+
